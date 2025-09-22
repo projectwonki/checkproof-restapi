@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -40,5 +42,43 @@ class UserController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    public function store(UserRequest $request)
+    {
+        // insert new record
+        $user = User::create([
+            'name' => $request['name'],
+            'email' => $request['email'],
+            'password' => bcrypt($request['password']),
+            'role' => 'user',
+            'active' => true,
+        ]);
+
+        // send email to user
+        $view = 'emails.user_created';
+        Mail::send($view, ['name' => $user->name, 'email' => $user->email, 'role' => $user->role], function ($message) use ($user) {
+            $message->to($user->email);
+            $message->subject('User Created Successfully');
+        });
+
+        // send email to administrator
+        $administrator = User::where('role', 'administrator')->first();
+        if ($administrator) {
+            $view = 'emails.admin_user_created';
+            Mail::send($view, ['name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'createdAt' => $user->created_at], function ($message) use ($administrator) {
+                $message->to($administrator->email);
+                $message->subject('New User Created');
+            });
+        }
+
+        $response = [
+            'id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            'created_at' => $user->created_at,
+        ];
+
+        return response()->json($response, 201);
     }
 }
