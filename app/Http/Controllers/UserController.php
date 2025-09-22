@@ -9,12 +9,19 @@ use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index(Request $request)
     {
         $paginate = $request->query('paginate', 15);
         $search = $request->query('search', null);
         $sortBy = $request->query('sortBy', 'created_at');
 
+        // fetch users with active status, including their orders count
         $users = User::with('orders')->where('active', true)
                 ->when(!empty($search), function ($query) use ($search) {
                     $query->where('name', 'like', "%$search%")
@@ -44,6 +51,12 @@ class UserController extends Controller
         return response()->json($response);
     }
 
+    /**
+     * Store a newly created resource in storage.
+     * 
+     * @param UserRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(UserRequest $request)
     {
         // insert new record
