@@ -33,6 +33,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $guarded = [];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -49,5 +51,21 @@ class User extends Authenticatable
     public function orders()
     {
         return $this->hasMany(Order::class, 'user_id', 'id');
+    }
+
+    public function isEditable($userId, $userRole)
+    {
+        if (auth()->check()) {
+            $authUser = auth()->user();
+            if ($authUser->role === 'administrator') {
+                return true;
+            } elseif ($authUser->role === 'manager' && $userRole === 'user') {
+                return true;
+            } elseif ($authUser->role === 'user' && $authUser->id === $userId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
