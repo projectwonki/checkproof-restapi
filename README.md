@@ -92,10 +92,28 @@ The application should now be available at http://localhost:8000.
 
 ## API List
 1. Login
+```
+Response:
+{
+   ...
+   "access_token": {token}
+   ...
+}
+```
 2. Get Users
 3. Create User
 4. Update User
 5. Logout
+
+```
+Request Headers (required for 2-5):
+{
+   Accept: application/json
+   Content-Type: application/json
+   Authorization: {access_token} // this from login response
+   ...
+}
+```
 
 ## Credentials of Initial User for Testing
 

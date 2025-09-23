@@ -7,7 +7,7 @@
 	},
 	"item": [
 		{
-			"name": "Get User API",
+			"name": "Get User",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -29,7 +29,7 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "Bearer 10|ftcKVWvNI5fQ5WPL3DhF65TrysM8BHwLazvMV3IY49f12e0",
+						"value": "Bearer 12|vInHm1jA87moi9sFoRn0inDReN9D6WId0izbhotnbe27fce",
 						"type": "text"
 					}
 				],
@@ -71,7 +71,7 @@
 			"response": []
 		},
 		{
-			"name": "Create User API",
+			"name": "Create User",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -119,7 +119,7 @@
 			"response": []
 		},
 		{
-			"name": "Update User API",
+			"name": "Update User",
 			"request": {
 				"method": "PUT",
 				"header": [
@@ -135,13 +135,13 @@
 					},
 					{
 						"key": "Authorization",
-						"value": "Bearer 9|V2V1BK1OkuCh6CaYGaTRs0YBHMPYN7a1URRy0nIF0ec95747",
+						"value": "Bearer 11|4yGZpi0VfIJivNGHTl4vHkqw9NcNHYMGsbMXAo6Zbafc6b8a",
 						"type": "text"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"name\": \"User 1 update teassss\",\n    \"email\": \"user1update@test.com\",\n    \"password\": \"root1234\"\n}",
+					"raw": "{\n    \"name\": \"User 1 update teassss asassdfs\",\n    \"email\": \"user1updatesss@test.com\",\n    \"password\": \"root1234\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -149,7 +149,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/api/users/3",
+					"raw": "http://127.0.0.1:8000/api/users/2",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -161,7 +161,7 @@
 					"path": [
 						"api",
 						"users",
-						"3"
+						"2"
 					]
 				}
 			},
@@ -194,7 +194,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"user1update@test.com\",\n    \"password\": \"root1234\"\n}",
+					"raw": "{\n    \"email\": \"admin@test.com\",\n    \"password\": \"root123\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
