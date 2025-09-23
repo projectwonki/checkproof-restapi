@@ -94,4 +94,28 @@ class UserController extends Controller
 
         return response()->json($response, 201);
     }
+
+    public function update(UserRequest $request, User $user)
+    {
+        // Check if the authenticated user has permission to edit
+        if (!auth()->user()->isEditable($user->id, $user->role)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Update user details
+        $user->name = $request->input('name', $user->name);
+        $user->email = $request->input('email', $user->email);
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->input('password'));
+        }
+        $user->save();
+
+        return response()->json([
+            'id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at,
+        ]);
+    }
 }
