@@ -4,11 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
 use App\Models\User;
+use App\Modules\User\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
+    protected $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;    
+    }
+    
     /**
      * Display a listing of the resource.
      * 
@@ -22,26 +30,7 @@ class UserController extends Controller
         $sortBy = $request->query('sortBy', 'created_at');
 
         // fetch users with active status, including their orders count
-        $users = User::with('orders')->where('active', true)
-                ->when(!empty($search), function ($query) use ($search) {
-                    $query->where('name', 'like', "%$search%")
-                          ->orWhere('email', 'like', "%$search%");
-                })
-                ->when(!empty($sortBy), function ($query) use ($sortBy) {
-                    $query->orderBy($sortBy, 'asc');
-                })->paginate($paginate);
-
-        $users = $users->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-                'role' => $user->role,
-                'created_at' => $user->created_at,
-                'orders_count' => $user->orders->count(),
-                'can_edit' => $user->isEditable($user->id, $user->role),
-            ];
-        });
+        $users = $this->userService->handleFetchUsers($search, $sortBy, $paginate);
 
         $response = [
             'page' => $request->query('page', 1),
@@ -52,7 +41,7 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created user in storage.
      * 
      * @param UserRequest $request
      * @return \Illuminate\Http\JsonResponse
@@ -60,29 +49,30 @@ class UserController extends Controller
     public function store(UserRequest $request)
     {
         // insert new record
-        $user = User::create([
-            'name' => $request['name'],
-            'email' => $request['email'],
-            'password' => bcrypt($request['password']),
-            'role' => 'user',
-            'active' => true,
-        ]);
+        $user = $this->userService->handleCreateUser($request->only(['name', 'email', 'password']));
 
+        // collect data for sending email
+        $data = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'to' => $user->email,
+            'createdAt' => $user->created_at,
+        ];
+        $data['view'] = 'emails.user_created';
+        $data['subject'] = 'User Created Successfully';
+        
         // send email to user
-        $view = 'emails.user_created';
-        Mail::send($view, ['name' => $user->name, 'email' => $user->email, 'role' => $user->role], function ($message) use ($user) {
-            $message->to($user->email);
-            $message->subject('User Created Successfully');
-        });
+        $this->userService->handleSendEmail($data);
 
         // send email to administrator
-        $administrator = User::where('role', 'administrator')->first();
+        $data['view'] = 'emails.admin_user_created';
+        $data['subject'] = 'New User Created';
+        $administrator = $this->userService->getAdministrator();
         if ($administrator) {
-            $view = 'emails.admin_user_created';
-            Mail::send($view, ['name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'createdAt' => $user->created_at], function ($message) use ($administrator) {
-                $message->to($administrator->email);
-                $message->subject('New User Created');
-            });
+            $data['to'] = $administrator->email;
+            // send email to admin
+            $this->userService->handleSendEmail($data);
         }
 
         $response = [
@@ -95,27 +85,24 @@ class UserController extends Controller
         return response()->json($response, 201);
     }
 
+    /**
+     * Update the user.
+     * 
+     * @param UserRequest $request
+     * @param User $user
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(UserRequest $request, User $user)
     {
-        // Check if the authenticated user has permission to edit
-        if (!auth()->user()->isEditable($user->id, $user->role)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         // Update user details
-        $user->name = $request->input('name', $user->name);
-        $user->email = $request->input('email', $user->email);
-        if ($request->filled('password')) {
-            $user->password = bcrypt($request->input('password'));
-        }
-        $user->save();
+        $createdUser = $this->userService->handleUpdateUser($request, $user);
 
         return response()->json([
-            'id' => $user->id,
-            'email' => $user->email,
-            'name' => $user->name,
-            'created_at' => $user->created_at,
-            'updated_at' => $user->updated_at,
+            'id' => $createdUser->id,
+            'email' => $createdUser->email,
+            'name' => $createdUser->name,
+            'created_at' => $createdUser->created_at,
+            'updated_at' => $createdUser->updated_at,
         ]);
     }
 }

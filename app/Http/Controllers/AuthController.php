@@ -2,46 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Modules\User\Services\UserService;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    protected $userService;
+
+    public function __construct(UserService $userService)
     {
-        // dd($request->all());
-        $credentials = $request->only('email', 'password');
-
-        if (auth()->attempt($credentials)) {
-            $user = auth()->user();
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User logged in successfully.',
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                ],
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid email or password.'
-        ], 401);
+        $this->userService = $userService;    
     }
 
+    /**
+     * Handle user login and return a token.
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        $response = $this->userService->handleUserLogin($credentials);
+
+        return response()->json($response, $response['success'] ? 200 : 401);
+    }
+
+    /**
+     * Handle user logout and revoke the token.
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        $response = $this->userService->handleUserLogout($request);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Successfully logged out'
-        ]);
+        return response()->json($response);
     }
 }

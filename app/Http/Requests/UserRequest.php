@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UserRequest extends FormRequest
 {
@@ -12,7 +13,21 @@ class UserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        // For create operations (POST), allow all authenticated users
+        if ($this->isMethod('post')) {
+            return true;
+        }
+
+        // For update operations (PUT/PATCH), check if user is editable
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            $user = $this->route('user'); // Get the user from route parameter
+            if ($user) {
+                $userService = app(\App\Modules\User\Services\UserService::class);
+                return $userService->isUserEditable($user);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -37,5 +52,15 @@ class UserRequest extends FormRequest
                 : ['nullable', 'string', 'min:8'], // update
             'name' => 'required|string|max:255',
         ];
+    }
+
+    /**
+     * Handle a failed authorization attempt.
+     */
+    protected function failedAuthorization()
+    {
+        throw new HttpResponseException(
+            response()->json(['message' => 'Unauthorized'], 403)
+        );
     }
 }

@@ -96,3 +96,24 @@ The application should now be available at http://localhost:8000.
 3. Create User
 4. Update User
 5. Logout
+
+## Credentials of Initial User for Testing
+
+1. Administrator
+```
+email: admin@test.com
+password: root123
+```
+2. Manager
+```
+email: manager@test.com
+password: root123
+```
+3. User
+```
+email: user1@test.com
+password: root123
+```
+
+## Postman Collection
+I already included postman collection for testing purpose
